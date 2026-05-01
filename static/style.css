@@ -1,4 +1,26 @@
 /* ═══════════════════════════════════════════════
+   ACCESSIBILITY — Skip Navigation
+═══════════════════════════════════════════════ */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 1rem;
+    z-index: 9999;
+    padding: 0.5rem 1rem;
+    background: var(--accent, #F06543);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 0 0 6px 6px;
+    text-decoration: none;
+    transition: top 0.15s ease;
+}
+.skip-link:focus {
+    top: 0;
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════════════════
    TOKENS
 ═══════════════════════════════════════════════ */
 :root {
