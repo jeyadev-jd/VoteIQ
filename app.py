@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from google.auth.exceptions import TransportError
-from flask_talisman import Talisman
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -42,27 +41,22 @@ limiter = Limiter(
     storage_uri="memory://",
 )
 
-# ─── Security Headers / CSP (S5 — removed unsafe-inline from script-src) ───
-csp = {
-    'default-src': "'self'",
-    'script-src': (
-        "'self' "
-        "https://accounts.google.com "
-        "https://www.youtube.com "
-        "https://cdn.jsdelivr.net"
-    ),
-    'style-src': (
-        "'self' 'unsafe-inline' "
-        "https://accounts.google.com "
-        "https://fonts.googleapis.com "
-        "https://cdn.jsdelivr.net"
-    ),
-    'font-src': "https://fonts.gstatic.com https://cdn.jsdelivr.net",
-    'img-src': "* 'self' data: https://lh3.googleusercontent.com",
-    'frame-src': "https://accounts.google.com https://www.youtube.com",
-    'connect-src': "'self'",
-}
-Talisman(app, content_security_policy=csp, force_https=False)
+# ─── Security Headers via after_request (replaces flask-talisman for Vercel) ─
+@app.after_request
+def add_security_headers(response):
+    csp = (
+        "default-src 'self'; "
+        "script-src 'self' https://accounts.google.com https://www.youtube.com https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+        "font-src https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+        "img-src * 'self' data: https://lh3.googleusercontent.com; "
+        "frame-src https://accounts.google.com https://www.youtube.com; "
+        "connect-src 'self';"
+    )
+    response.headers['Content-Security-Policy'] = csp
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    return response
 
 # ─── In-memory database (Q1 — noted; suitable for demo; comment guides upgrade)
 # NOTE: For production, replace with SQLAlchemy + a persistent DB.
