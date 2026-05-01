@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VoteIQ — An educational assistant explaining the Indian election process. Learn about voting, registration, and electoral myths.">
+    <meta name="google-client-id" content="{{ google_client_id | e }}">
+    <title>VoteIQ - Election Education Assistant</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='%23F06543' d='M8.5 1.75v2.716l.047-.002c.312-.012.742-.016 1.051.046.28.056.543.18.738.288.273.152.456.385.56.642l.132-.012c.312-.024.794-.038 1.158.108.37.148.689.487.88.716.075.09.141.175.195.248h.582a2 2 0 0 1 1.99 2.199l-.272 2.715a3.5 3.5 0 0 1-.444 1.389l-1.395 2.441A1.5 1.5 0 0 1 12.42 16H6.118a1.5 1.5 0 0 1-1.342-.83l-1.215-2.43L1.07 8.589a1.517 1.517 0 0 1 2.373-1.852L5 8.293V1.75a1.75 1.75 0 0 1 3.5 0'/></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=1.8">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- YouTube iframe_api is loaded lazily by app.js when the Journey tab is first opened (E7) -->
+</head>
+
+<body>
+    <div class="shell">
+
+        <!-- ─── LEFT SIDEBAR ──────────────────────────── -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon"><i class="bi bi-hand-index-thumb-fill"></i></div>
+                <span class="brand-name">VoteIQ</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <p class="nav-label">Menu</p>
+                <a href="#" class="nav-link-item active mode-btn" data-mode="ask">
+                    <i class="bi bi-chat-dots"></i><span>AI Chat Helper</span>
+                </a>
+                <a href="#" class="nav-link-item mode-btn" data-mode="journey">
+                    <i class="bi bi-map"></i><span>Voter Journey</span>
+                </a>
+                <a href="#" class="nav-link-item mode-btn" data-mode="myth">
+                    <i class="bi bi-shield-check"></i><span>Myth Buster</span>
+                </a>
+
+                <p class="nav-label mt-3">System</p>
+                <a href="#" class="nav-link-item mode-btn" id="stats-btn" data-mode="stats">
+                    <i class="bi bi-bar-chart-line"></i><span>Statistics</span>
+                </a>
+                <a href="#" class="nav-link-item" id="theme-toggle">
+                    <i class="bi bi-moon-stars" id="theme-icon"></i><span>Dark Mode</span>
+                </a>
+            </nav>
+
+            <!-- Voter Card -->
+            <div class="voter-card">
+                <i class="bi bi-lightning-charge-fill voter-card-icon"></i>
+                <p class="voter-card-title">Voter Plan</p>
+                <p class="voter-card-sub">Strengthen your election knowledge</p>
+                <div class="voter-card-score" id="readiness-score">Beginner</div>
+                <div class="voter-card-progress">
+                    <div class="voter-card-bar" id="voter-progress" style="width:20%"></div>
+                </div>
+                <div class="voter-card-stats">
+                    <span>Questions <strong id="stat-q">0</strong></span>
+                    <span>Myths <strong id="stat-m">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Profile link -->
+            <a href="#" class="nav-link-item" data-bs-toggle="modal" data-bs-target="#profileModal">
+                <i class="bi bi-person-badge"></i><span>My Profile</span>
+            </a>
+        </aside>
+
+        <!-- ─── MAIN PANEL ─────────────────────────────── -->
+        <main class="main-panel">
+
+            <!-- Topbar -->
+            <header class="topbar">
+                <!-- A1: aria-live so screen readers announce tab changes -->
+                <h1 class="topbar-title" id="current-mode-title" aria-live="polite">AI Chat Helper</h1>
+                <div class="topbar-actions">
+                    <button class="icon-btn" aria-label="Notifications"><i class="bi bi-bell"></i></button>
+                    <button class="icon-btn" aria-label="Profile" data-bs-toggle="modal" data-bs-target="#profileModal"
+                        id="topbar-profile-btn"
+                        style="padding: 4px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-person-circle" id="topbar-default-icon"></i>
+                        <img id="topbar-avatar" class="d-none"
+                            style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" src=""
+                            alt="Profile">
+                    </button>
+                </div>
+            </header>
+
+            <!-- A6: role="log" + aria-live makes new messages announced by screen readers -->
+            <section id="ask-mode" class="view active">
+                <div role="log" aria-live="polite" aria-label="Chat conversation" class="chat-feed" id="chat-container">
+                    <div class="welcome-state" id="welcome-state">
+                        <i class="bi bi-chat-square-text welcome-icon" aria-hidden="true"></i>
+                        <p class="welcome-text">Ask me anything about the election process</p>
+                        <div class="suggestion-chips" role="list" aria-label="Suggested questions">
+                            <button class="chip" role="listitem">What is NOTA?</button>
+                            <button class="chip" role="listitem">How does voting work?</button>
+                            <button class="chip" role="listitem">Who won 2024?</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="loading" class="loading-row d-none" role="status" aria-label="Loading response">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+
+                <div class="chat-input-wrap">
+                    <div class="chat-input-box">
+                        <!-- A4: Visually-hidden label for screen readers -->
+                        <label for="query-input" class="visually-hidden">Ask a question about elections</label>
+                        <input type="text" id="query-input" placeholder="Ask about elections…" autocomplete="off"
+                               aria-label="Ask a question about elections">
+                        <button class="send-btn" id="ask-btn" aria-label="Send question">
+                            <i class="bi bi-send-fill" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <p class="input-disclaimer">VoteIQ may occasionally produce inaccurate information. Verify important
+                        facts independently.</p>
+                </div>
+            </section>
+
+            <!-- ── JOURNEY MODE ── -->
+            <section id="journey-mode" class="view d-none">
+                <div class="view-header">
+                    <div class="view-header-text">
+                        <h2>My Voter Journey</h2>
+                        <p class="view-sub">A complete step-by-step guide to participating in the Indian election
+                            process</p>
+                    </div>
+                    <div class="view-header-meta">
+                        <span class="journey-badge"><i class="bi bi-patch-check-fill"></i> 6 Steps</span>
+                        <span class="journey-badge accent"><i class="bi bi-play-btn-fill"></i> With Videos</span>
+                    </div>
+                </div>
+                <div class="journey-list" id="journey-list">
+                    <!-- Steps injected by JS on page load -->
+                    <div class="journey-loading" id="journey-loading">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── MYTH MODE ── -->
+            <section id="myth-mode" class="view d-none">
+                <div class="view-header">
+                    <div class="view-header-text">
+                        <h2>Myth Buster</h2>
+                        <p class="view-sub">Separating electoral fact from fiction</p>
+                    </div>
+                    <div class="view-header-meta">
+                        <span class="journey-badge" id="myth-count-badge"><i class="bi bi-shield-check"></i>
+                            Loading…</span>
+                    </div>
+                </div>
+                <div id="myths-loading" class="journey-loading">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+                <div class="myth-grid" id="myths-container" style="display: none;"></div>
+
+                <div class="empty-state text-center mt-5">
+                    <i class="bi bi-robot" style="font-size: 3rem; color: var(--text-3);" aria-hidden="true"></i>
+                    <h4 class="mt-3" style="color: var(--text-2);">Talk to the AI</h4>
+                    <p style="color: var(--text-3);">Please ask the VoteIQ AI Chatbot to verify or bust any election
+                        myths for you!</p>
+                    <!-- Q17: onclick removed; JS event listener wired in app.js -->
+                    <button class="btn btn-primary mt-3 py-2 px-4" id="myth-go-to-chat-btn"
+                            style="background: var(--accent); border: none;">
+                        Open AI Chat Helper
+                    </button>
+                </div>
+            </section>
+
+            <!-- ── STATS MODE ── -->
+            <section id="stats-mode" class="view d-none">
+                <div class="view-header">
+                    <div class="view-header-text">
+                        <h2>Your Learning Statistics</h2>
+                        <p class="view-sub">Track your progress toward becoming an eligible voter</p>
+                    </div>
+                </div>
+
+                <div class="stats-page-container">
+                    <!-- KPI Row -->
+                    <div class="stats-kpi-row">
+                        <div class="stats-kpi">
+                            <div class="stats-kpi-icon blue"><i class="bi bi-chat-dots-fill"></i></div>
+                            <div class="stats-kpi-val" id="modal-stat-q">0</div>
+                            <div class="stats-kpi-label">Questions Asked</div>
+                        </div>
+                        <div class="stats-kpi">
+                            <div class="stats-kpi-icon green"><i class="bi bi-shield-check"></i></div>
+                            <div class="stats-kpi-val" id="modal-stat-m">0</div>
+                            <div class="stats-kpi-label">Myths Reviewed</div>
+                        </div>
+                        <div class="stats-kpi">
+                            <div class="stats-kpi-icon orange"><i class="bi bi-map"></i></div>
+                            <div class="stats-kpi-val" id="modal-stat-j">0</div>
+                            <div class="stats-kpi-label">Journey Steps</div>
+                        </div>
+                        <div class="stats-kpi">
+                            <div class="stats-kpi-icon purple"><i class="bi bi-trophy-fill"></i></div>
+                            <div class="stats-kpi-val" id="modal-readiness">Beginner</div>
+                            <div class="stats-kpi-label">Readiness Level</div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Section -->
+                    <div class="stats-section mt-4">
+                        <div class="stats-section-title">Overall Progress</div>
+                        <div class="stats-progress-wrap">
+                            <div class="stats-progress-label">
+                                <span>Voter Readiness</span>
+                                <span id="modal-pct">20%</span>
+                            </div>
+                            <div class="stats-progress-bar-bg mb-3">
+                                <div class="stats-progress-bar-fill" id="modal-progress-bar" style="width:20%"></div>
+                            </div>
+
+                            <div class="stats-progress-label mt-2">
+                                <span>AI Maturity Score (80% Required)</span>
+                            </div>
+                            <div class="progress"
+                                style="height: 12px; background: var(--bg); border: 1px solid var(--border);">
+                                <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated text-dark fw-bold"
+                                    id="modal-maturity-bar" role="progressbar" style="width: 0%; font-size: 10px;"
+                                    aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                            </div>
+
+                            <div class="stats-progress-milestones mt-3">
+                                <span class="milestone" data-pct="0">Beginner</span>
+                                <span class="milestone" data-pct="50">Learner</span>
+                                <span class="milestone" data-pct="100">Eligible</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activity breakdown -->
+                    <div class="stats-section mt-4">
+                        <div class="stats-section-title">Activity Breakdown</div>
+                        <div class="stats-activity-list">
+                            <div class="stats-activity-row">
+                                <i class="bi bi-chat-dots text-primary"></i>
+                                <div class="stats-activity-text">
+                                    <strong>Questions Asked</strong>
+                                    <span id="modal-q-label">You haven't asked any questions yet. Try the AI Chat
+                                        Helper!</span>
+                                </div>
+                                <div class="stats-activity-pill" id="modal-q-pill">0</div>
+                            </div>
+                            <div class="stats-activity-row">
+                                <i class="bi bi-shield-check text-success"></i>
+                                <div class="stats-activity-text">
+                                    <strong>Myths Reviewed</strong>
+                                    <span id="modal-m-label">Open the Myth Buster to learn what is fact vs
+                                        fiction.</span>
+                                </div>
+                                <div class="stats-activity-pill" id="modal-m-pill">0</div>
+                            </div>
+                            <div class="stats-activity-row">
+                                <i class="bi bi-map text-warning"></i>
+                                <div class="stats-activity-text">
+                                    <strong>Journey Steps Viewed</strong>
+                                    <span id="modal-j-label">Open Voter Journey to explore the step-by-step voting
+                                        guide.</span>
+                                </div>
+                                <div class="stats-activity-pill" id="modal-j-pill">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- ─── RIGHT HISTORY PANEL ──────────────────── -->
+        <aside class="history-panel">
+            <div class="history-header">
+                <span class="history-title">History</span>
+                <span class="history-count" id="history-count">0 / 50</span>
+            </div>
+            <div class="history-list" id="history-list">
+                <div class="history-empty" id="history-empty">
+                    <i class="bi bi-clock-history"></i>
+                    <p>No history yet</p>
+                </div>
+            </div>
+            <div class="history-footer">
+                <button id="clear-history" class="clear-btn">
+                    <i class="bi bi-trash3"></i> Clear history
+                </button>
+            </div>
+        </aside>
+
+    </div>
+
+
+    <!-- ═══════════════ PROFILE / VOTER ID MODAL ════════════════ -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content stats-modal-content">
+                <div class="modal-header stats-modal-header">
+                    <h5 class="modal-title" id="profileModalLabel">
+                        <i class="bi bi-person-badge me-2"></i>Voter Profile
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body stats-modal-body">
+
+                    <!-- STEP 1: GOOGLE SIGN IN -->
+                    <div id="auth-step-1" class="text-center py-4">
+                        <h5 class="mb-3" style="color: var(--text-1);">Sign in to VoteIQ</h5>
+                        <p class="text-muted small mb-4">Secure your profile and save your progress.</p>
+                        <div id="g_id_onload" data-client_id="{{ google_client_id | e }}" data-callback="handleGoogleAuth"
+                            data-auto_prompt="false">
+                        </div>
+                        <div class="g_id_signin d-flex justify-content-center" data-type="standard" data-size="large"
+                            data-theme="outline" data-text="sign_in_with" data-shape="rectangular"
+                            data-logo_alignment="left">
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: COMPLETE SIGNUP (DOB & STATE) -->
+                    <form id="signup-form" class="d-none">
+                        <div class="text-center mb-4">
+                            <img id="signup-avatar" src="" alt="Avatar" class="rounded-circle mb-2"
+                                style="width: 60px; height: 60px; border: 2px solid var(--accent);">
+                            <h6 class="text-white mb-0" id="signup-name"></h6>
+                            <p class="text-muted small" id="signup-email"></p>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-7 mb-3">
+                                <label class="form-label text-muted small fw-bold text-uppercase">State</label>
+                                <select id="prof-state" class="form-select modal-form-ctrl border-secondary" required>
+                                    <option value="">Select State</option>
+                                    <option value="AP">Andhra Pradesh</option>
+                                    <option value="AR">Arunachal Pradesh</option>
+                                    <option value="AS">Assam</option>
+                                    <option value="BR">Bihar</option>
+                                    <option value="CG">Chhattisgarh</option>
+                                    <option value="GA">Goa</option>
+                                    <option value="GJ">Gujarat</option>
+                                    <option value="HR">Haryana</option>
+                                    <option value="HP">Himachal Pradesh</option>
+                                    <option value="JH">Jharkhand</option>
+                                    <option value="KA">Karnataka</option>
+                                    <option value="KL">Kerala</option>
+                                    <option value="MP">Madhya Pradesh</option>
+                                    <option value="MH">Maharashtra</option>
+                                    <option value="MN">Manipur</option>
+                                    <option value="ML">Meghalaya</option>
+                                    <option value="MZ">Mizoram</option>
+                                    <option value="NL">Nagaland</option>
+                                    <option value="OR">Odisha</option>
+                                    <option value="PB">Punjab</option>
+                                    <option value="RJ">Rajasthan</option>
+                                    <option value="SK">Sikkim</option>
+                                    <option value="TN">Tamil Nadu</option>
+                                    <option value="TG">Telangana</option>
+                                    <option value="TR">Tripura</option>
+                                    <option value="UP">Uttar Pradesh</option>
+                                    <option value="UK">Uttarakhand</option>
+                                    <option value="WB">West Bengal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5 mb-3">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Date of Birth</label>
+                                <input type="date" id="prof-dob" class="form-control modal-form-ctrl border-secondary"
+                                    required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100"
+                            style="background: var(--accent); border: none;">Complete Profile</button>
+                    </form>
+
+                    <!-- STEP 3: VOTER CARD -->
+                    <div id="shareable-card-container" class="mt-2 d-none">
+                        <div class="text-center mb-3">
+                            <img id="card-avatar" src="" alt="Avatar" class="rounded-circle"
+                                style="width: 50px; height: 50px; border: 2px solid var(--accent);">
+                        </div>
+                        <div class="shareable-voter-card p-4 rounded-4"
+                            style="background: var(--surface-2); color: var(--text-1); border: 1px solid var(--border); position: relative; overflow: hidden; box-shadow: var(--shadow-md);">
+                            <!-- Decorative bg -->
+                            <div
+                                style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(240, 101, 67, 0.1); border-radius: 50%; filter: blur(20px);">
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-4 position-relative">
+                                <div>
+                                    <h6 class="mb-0 fw-bold" style="color: var(--accent);"><i
+                                            class="bi bi-box-seam me-2"></i>VoteIQ Card</h6>
+                                </div>
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg"
+                                    alt="Emblem"
+                                    style="height: 35px; position: absolute; right: 0; top: 0; filter: var(--emblem-filter);">
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-8">
+                                    <p class="mb-1" style="font-size: 12px; color: var(--text-2);">Name</p>
+                                    <p class="mb-2 fw-bold" style="font-size: 15px; color: var(--text-1);"
+                                        id="card-name"></p>
+                                    <p class="mb-1" style="font-size: 12px; color: var(--text-2);">State</p>
+                                    <p class="mb-0 fw-bold" style="font-size: 13px; color: var(--text-1);"
+                                        id="card-state"></p>
+                                </div>
+                                <div class="col-4 text-end">
+                                    <p class="mb-1" style="font-size: 12px; color: var(--text-2);">DOB</p>
+                                    <p class="mb-2 fw-bold" style="font-size: 14px; color: var(--text-1);"
+                                        id="card-dob"></p>
+                                </div>
+                            </div>
+
+                            <div class="mb-3 text-center">
+                                <span class="badge bg-success" id="card-status"
+                                    style="font-size: 12px; padding: 6px 10px;">First-Time</span>
+                            </div>
+
+                            <div class="p-3 rounded-3 mb-3"
+                                style="background: var(--bg); border: 1px dashed var(--border);">
+                                <p class="mb-0 text-center font-monospace fs-5 text-info" id="card-id"
+                                    style="letter-spacing: 1px;"></p>
+                            </div>
+
+                            <div class="d-flex align-items-center mb-1">
+                                <div class="progress flex-grow-1"
+                                    style="height: 10px; background: var(--bg); border-radius: 10px;">
+                                    <div class="progress-bar" id="card-progress-bar"
+                                        style="width: 20%; background: linear-gradient(90deg, #F06543, #FF8A65); border-radius: 10px;">
+                                    </div>
+                                </div>
+                                <span class="ms-3" id="card-progress-text"
+                                    style="font-size: 14px; font-weight: 700; color: var(--text-1);">20% Ready</span>
+                            </div>
+
+                            <p class="text-center mt-4 mb-0"
+                                style="font-size: 10px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px;">
+                                This is a demo voter identity for educational purposes</p>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3">
+                            <button id="share-card-btn" class="btn flex-grow-1 py-2 fw-bold"
+                                style="background: var(--surface-2); color: var(--text-1); border: 1px solid var(--border); border-radius: var(--radius-sm);"><i
+                                    class="bi bi-share-fill me-2"></i>Share Card</button>
+                            <button id="logout-btn" class="btn btn-outline-danger px-4 py-2 fw-bold"
+                                style="border-radius: var(--radius-sm);"><i class="bi bi-box-arrow-right me-2"></i>Sign
+                                Out</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='app.js') }}?v=1.20"></script>
+</body>
+</html>
