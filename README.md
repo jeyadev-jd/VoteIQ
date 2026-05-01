@@ -78,44 +78,19 @@ ai_data = json.loads(response.text)
 
 While AI tools accelerated the development, the **system architecture was entirely designed and validated by the developer, Jeyadev**.
 
-#### Architecture Overview
+#### 🔹 Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        USER BROWSER                         │
-│   HTML + Vanilla JS + CSS  (Google Fonts, YouTube IFrame)   │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ HTTP/HTTPS
-┌─────────────────────▼───────────────────────────────────────┐
-│               VERCEL SERVERLESS (Python)                     │
-│   Flask App  ──  Rate Limiter  ──  Session Management        │
-│   Routes: /  /ask  /journey  /myth  /api/auth/*  /api/quiz   │
-└──────────┬─────────────────────────┬───────────────────────┘
-           │                         │
-┌──────────▼──────┐       ┌──────────▼──────────────┐
-│  SAFETY LAYER   │       │   GOOGLE GEMINI API      │
-│  guards.py      │       │   gemini-2.0-flash       │
-│  - cache check  │       │   - Myth classifier      │
-│  - risky query  │       │   - Civic answers        │
-│  - post-scan    │       │   - Maturity scoring     │
-└─────────────────┘       └─────────────────────────┘
-           │
-┌──────────▼──────────────────────────────────────────┐
-│              GOOGLE OAUTH 2.0                        │
-│  Token verification via google-auth + id_token       │
-└─────────────────────────────────────────────────────┘
-```
+- **Frontend (Vanilla JS)**
+- **Flask API (Vercel)**
+- **Gemini API**
+- **Firebase Firestore**
+- **Firebase Analytics**
 
-#### Key Design Decisions (by Jeyadev)
+#### 🔹 Why these tools?
 
-| Decision | Rationale |
-|---|---|
-| **Flask over FastAPI** | Simpler templating with Jinja2, better for single-page HTML app |
-| **In-memory `users_db`** | Demo/hackathon scale — noted for production upgrade to PostgreSQL |
-| **Vercel serverless** | Zero infrastructure management, instant global CDN |
-| **No framework JS** | Vanilla JS keeps bundle size zero, faster load, no build step |
-| **Gamification-first UX** | Steps, scores, and myths drive higher civic engagement vs static pages |
-| **3-layer AI safety** | Pre-flight guard → Gemini prompt framing → Post-response scan |
+- **Why Flask**: Fast, lightweight, and perfect for building a backend API without unnecessary overhead.
+- **Why Gemini**: Provides best-in-class reasoning and structured data generation necessary for our gamification and myth classification features.
+- **Why Firestore**: Scales effortlessly and makes user progress tracking simple with a powerful NoSQL document structure.
 
 #### Validation Performed
 
@@ -219,28 +194,12 @@ Open **http://localhost:8080** in your browser.
 
 ---
 
-## 🔐 Safety Architecture
+## 🔹 Safety Layer
 
-VoteIQ uses a **3-layer safety system** to ensure the AI never provides election results or biased political content:
-
-```
-User Query
-    │
-    ▼
-[Layer 1] Pre-flight cache check → returns verified answer if matched
-    │
-    ▼
-[Layer 2] Risky query filter → blocks result/outcome/winner queries
-    │
-    ▼
-[Layer 3] Gemini with strict system prompt → educational answers only
-    │
-    ▼
-[Layer 4] Post-response scan → flags any hallucinated result claims
-    │
-    ▼
-Safe Response to User
-```
+To ensure VoteIQ is a reliable educational resource, we implement:
+- **Prompt filtering**: Hardcoded restrictions preventing the generation of partisan content.
+- **Bias prevention**: Neutrality enforced through strict Gemini system instructions.
+- **No prediction rules**: Clear boundaries preventing the AI from discussing election results, outcomes, or predicting future events.
 
 ---
 

@@ -508,6 +508,9 @@ async function checkStepUnlock(stepNum) {
             // All steps done — unlock quiz
             updateProgressBackend(stepNum + 1);
             checkQuizUnlock();
+            if (window.analytics && window.logEvent) {
+                window.logEvent(window.analytics, 'journey_completed');
+            }
         }
     } else if (prog.videoDone) {
         if (statusEl) statusEl.innerHTML = '<span class="badge bg-info">Video Done — Click Link</span>';
@@ -658,6 +661,9 @@ async function showQuizSection() {
                     state.profile.quiz_passed = true;
                     localStorage.setItem('voteiq_profile', JSON.stringify(state.profile));
                     syncVoterCard();
+                    if (window.analytics && window.logEvent) {
+                        window.logEvent(window.analytics, 'quiz_completed');
+                    }
                 }
             } else {
                 const needed = Math.ceil(result.total * 0.75);

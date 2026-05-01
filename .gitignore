@@ -17,3 +17,5 @@ output.txt
 package.json
 package-lock.json
 tests/
+firebase_key.json
+*-firebase-adminsdk-*.json
