@@ -32,6 +32,9 @@ limiter = Limiter(
     get_remote_address,
     app=app,
     default_limits=[],          # No global limit; only apply per-route
+    storage_uri="memory://",
+)
+
 # Apply rate limits manually since we use blueprints
 
 # ─── Security Headers via after_request (replaces flask-talisman for Vercel) ─
