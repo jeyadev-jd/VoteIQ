@@ -27,13 +27,11 @@ logger = logging.getLogger(__name__)
 # ─── App factory ────────────────────────────────────────────────────────────
 app = Flask(__name__)
 
-# S1 — Mandatory secret key; fail loudly at startup if missing
+# S1 — Mandatory secret key; provide a fallback for demo/Vercel startup stability
 _secret = os.environ.get("FLASK_SECRET_KEY")
 if not _secret:
-    raise RuntimeError(
-        "FLASK_SECRET_KEY environment variable is not set. "
-        "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
-    )
+    logger.warning("FLASK_SECRET_KEY not set. Using a temporary fallback key.")
+    _secret = "dev-fallback-key-12345"
 app.secret_key = _secret
 
 # ─── Rate Limiter (S6) ──────────────────────────────────────────────────────
